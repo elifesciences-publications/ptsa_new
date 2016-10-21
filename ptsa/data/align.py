@@ -85,7 +85,7 @@ def find_needle_in_haystack(needle, haystack, maxdiff):
     nlen = len(needle)
     found = False
     for i in range(len(haystack)-nlen):
-        if (haystack[i:i+nlen] - needle).max() < maxdiff:
+        if np.absolute(haystack[i:i+nlen] - needle).max() < maxdiff:
             found = True
             break
     if not found:
