@@ -215,8 +215,3 @@ class TestFiltersExecute(unittest.TestCase):
         new_timeseries = MonopolarToBipolarMapper(time_series=time_series,
                                                   bipolar_pairs=pairs).filter()
         assert np.array_equal(new_timeseries,np.zeros(new_timeseries.shape))
-
-if __name__ =='__main__':
-    test = TestFiltersExecute()
-    test.setUp()
-    test.test_MonopolarToBipolarMapper()
