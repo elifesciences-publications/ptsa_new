@@ -1,6 +1,7 @@
 import unittest
 import os.path as osp
 import pytest
+import xarray as xr
 
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
@@ -215,3 +216,39 @@ class TestFiltersExecute(unittest.TestCase):
         new_timeseries = MonopolarToBipolarMapper(time_series=time_series,
                                                   bipolar_pairs=pairs).filter()
         assert np.array_equal(new_timeseries,np.zeros(new_timeseries.shape))
+
+
+class TestFilterShapes:
+    """
+    Spectral filter behavior should not depend on shape of input array
+    """
+    @classmethod
+    def setup_class(self):
+        self.times = times = np.linspace(0,1,1000)
+        self.data = np.sin(8*times) + np.sin(16*times) + np.sin(32*times)
+        self.freqs=  np.array([10,20],dtype=float)
+        self.timeseries = timeseries.TimeSeries(data=self.data[None,:],
+                                                coords = {
+                                                    'offsets':[0],
+                                                    'time':self.times,
+                                                    'samplerate':1000
+                                                },
+                                                dims=('offsets','time'))
+
+    def test_MorletWaveletFilterCpp(self):
+        pow0,phase0 = MorletWaveletFilterCpp(self.timeseries,freqs=self.freqs,
+                                    width=4,output='both').filter()
+
+        pow1,phase1 = MorletWaveletFilterCpp(self.timeseries.transpose(),
+                                           freqs=self.freqs,
+                                           width=4,output='both').filter()
+
+        xr.testing.assert_allclose(pow0,pow1.transpose(*pow0.dims))
+        xr.testing.assert_allclose(phase0,phase1.transpose(*phase0.dims))
+
+    def test_ButterworthFilter(self):
+        filtered0 = ButterworthFilter(self.timeseries,self.freqs.tolist()).filter()
+        filtered1 = ButterworthFilter(self.timeseries.transpose(),self.freqs.tolist()).filter()
+
+        xr.testing.assert_allclose(filtered0,filtered1.transpose(*filtered0.dims))
+
